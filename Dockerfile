@@ -37,11 +37,11 @@ COPY . .
 # 从前端构建阶段复制构建好的静态文件
 COPY --from=frontend-builder /app/dist ./web/dist
 
-# 构建Go应用，使用更兼容的编译选项
+# 构建Go应用，使用兼容musl的编译选项
 RUN CGO_ENABLED=1 GOOS=linux \
     go build -a -installsuffix cgo \
     -tags "sqlite_omit_load_extension" \
-    -ldflags "-s -w -extldflags '-static'" \
+    -ldflags "-s -w" \
     -o mailcat .
 
 # 第三阶段：运行时镜像
