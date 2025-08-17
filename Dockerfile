@@ -21,7 +21,7 @@ RUN npm run build
 FROM golang:1.21-alpine AS go-builder
 
 # 安装必要的包
-RUN apk add --no-cache gcc musl-dev sqlite-dev
+RUN apk add --no-cache gcc musl-dev sqlite-dev linux-headers
 
 WORKDIR /app
 
@@ -38,7 +38,7 @@ COPY . .
 COPY --from=frontend-builder /app/dist ./web/dist
 
 # 构建Go应用
-RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o mailcat .
+RUN CGO_ENABLED=1 GOOS=linux CGO_CFLAGS="-D_GNU_SOURCE" go build -a -installsuffix cgo -tags "sqlite_omit_load_extension" -ldflags "-s -w" -o mailcat .
 
 # 第三阶段：运行时镜像
 FROM alpine:latest
