@@ -119,3 +119,4 @@ coverage/
 # 配置文件备份
 config/*.bak
 config/*.backup
+deploy-commands.sh

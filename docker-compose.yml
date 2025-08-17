@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  mailcat:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - MAILCAT_API_AUTH_TOKEN=your_api_token_here
+      - MAILCAT_ADMIN_PASSWORD=your_admin_password_here
+    volumes:
+      - mailcat_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  mailcat_data:

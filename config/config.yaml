@@ -6,7 +6,7 @@ database:
   path: "./data/emails.db"
 
 api:
-  auth_token: "mengmeng"
+  auth_token: ""
 
 admin:
-  password: "admin123"
+  password: ""

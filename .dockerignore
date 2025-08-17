@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Node modules (will be installed in container)
+web/frontend/node_modules
+web/frontend/dist
+
+# Go build artifacts
+mailcat
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+test/
+tests/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Environment files (these should be set via environment variables)
+.env
+.env.local
+.env.production
