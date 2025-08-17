@@ -8,8 +8,8 @@ WORKDIR /app/frontend
 # 复制前端依赖文件
 COPY web/frontend/package*.json ./
 
-# 安装前端依赖
-RUN npm ci --only=production
+# 安装前端依赖（包括构建工具）
+RUN npm ci
 
 # 复制前端源码
 COPY web/frontend/ ./
@@ -35,7 +35,7 @@ RUN go mod download
 COPY . .
 
 # 从前端构建阶段复制构建好的静态文件
-COPY --from=frontend-builder /app/frontend/../dist ./web/dist
+COPY --from=frontend-builder /app/frontend/dist ./web/dist
 
 # 构建Go应用
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o mailcat .
