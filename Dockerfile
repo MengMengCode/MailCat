@@ -70,6 +70,7 @@ COPY --from=go-builder /app/config ./config
 
 # 创建数据目录并设置权限
 RUN mkdir -p /app/data && \
+    chmod 755 /app/data && \
     chown -R mailcat:mailcat /app
 
 # 切换到非root用户
