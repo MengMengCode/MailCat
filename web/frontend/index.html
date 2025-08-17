@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MailCat - 管理后台</title>
+  <style>
+    /* CSS 变量定义 */
+    :root {
+      /* 主色调 */
+      --primary-color: #000;
+      --secondary-color: #fff;
+      --accent-color: #0070f3;
+      
+      /* 边框和分割线 */
+      --border-color: #eaeaea;
+      --border-color-light: #f0f0f0;
+      --border-color-dark: #d4d4d4;
+      
+      /* 背景色 */
+      --background: #fff;
+      --background-secondary: #fafafa;
+      --surface: #fff;
+      --surface-hover: #f9f9f9;
+      --surface-active: #f0f0f0;
+      
+      /* 文字颜色 */
+      --text-primary: #000;
+      --text-secondary: #666;
+      --text-tertiary: #999;
+      --text-inverse: #fff;
+      
+      /* 状态颜色 */
+      --success-color: #0070f3;
+      --warning-color: #f5a623;
+      --error-color: #e00;
+      --info-color: #0070f3;
+      
+      /* 阴影 */
+      --shadow-small: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-large: 0 8px 30px rgba(0, 0, 0, 0.12);
+      
+      /* 圆角 */
+      --radius-small: 4px;
+      --radius-medium: 6px;
+      --radius-large: 8px;
+      --radius-xl: 12px;
+      
+      /* 间距 */
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --spacing-2xl: 48px;
+      
+      /* 字体 */
+      --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: var(--font-sans);
+      background: var(--background-secondary);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      line-height: 1.6;
+    }
+    
+    #app {
+      min-height: 100vh;
+      background: var(--background-secondary);
+    }
+    
+    /* Vercel 风格的加载动画 */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: var(--background-secondary);
+      gap: var(--spacing-lg);
+    }
+    
+    .loading-logo {
+      font-size: 3rem;
+      background: linear-gradient(135deg, var(--primary-color) 0%, #333 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .loading-spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border-color);
+      border-top: 2px solid var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    .loading-text {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { 
+        opacity: 1; 
+        transform: scale(1);
+      }
+      50% { 
+        opacity: 0.8; 
+        transform: scale(1.05);
+      }
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .loading-logo {
+        font-size: 2.5rem;
+      }
+      
+      .loading-spinner {
+        width: 20px;
+        height: 20px;
+      }
+      
+      .loading-text {
+        font-size: 0.8125rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .loading {
+        padding: var(--spacing-lg);
+      }
+      
+      .loading-logo {
+        font-size: 2rem;
+      }
+    }
+    
+    /* 深色模式支持 */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #000;
+        --background-secondary: #111;
+        --surface: #1a1a1a;
+        --surface-hover: #222;
+        --surface-active: #333;
+        --text-primary: #fff;
+        --text-secondary: #999;
+        --text-tertiary: #666;
+        --text-inverse: #000;
+        --border-color: #333;
+        --border-color-light: #222;
+        --border-color-dark: #444;
+      }
+    }
+    
+    /* 预加载关键字体 */
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: local('Inter Regular'), local('Inter-Regular');
+    }
+    
+    /* 防止布局偏移 */
+    img, video {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    /* 改善触摸体验 */
+    button, [role="button"] {
+      touch-action: manipulation;
+    }
+    
+    /* 改善焦点可见性 */
+    :focus-visible {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="loading">
+      <div class="loading-logo">📧</div>
+      <div class="loading-spinner"></div>
+      <div class="loading-text">MailCat加载中...</div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
