@@ -35,7 +35,7 @@ RUN go mod download
 COPY . .
 
 # 从前端构建阶段复制构建好的静态文件
-COPY --from=frontend-builder /app/frontend/dist ./web/dist
+COPY --from=frontend-builder /app/dist ./web/dist
 
 # 构建Go应用
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o mailcat .
