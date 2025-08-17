@@ -35,7 +35,7 @@ RUN go mod download
 COPY . .
 
 # 从前端构建阶段复制构建好的静态文件
-COPY --from=frontend-builder /app/dist ./web/dist
+COPY --from=frontend-builder /app/frontend/dist ./web/dist
 
 # 设置 musl 兼容参数（解决 pread64/pwrite64/off64_t 问题）
 ENV CGO_CFLAGS="-D_LARGEFILE64_SOURCE=1 -D_GNU_SOURCE=1 -Doff64_t=off_t -Dpread64=pread -Dpwrite64=pwrite"
@@ -64,6 +64,9 @@ RUN addgroup -g 1001 -S mailcat && \
 
 # 复制构建好的应用
 COPY --from=go-builder /app/mailcat .
+
+# 复制前端静态文件
+COPY --from=go-builder /app/web/dist ./web/dist
 
 # 复制配置文件模板
 COPY --from=go-builder /app/config ./config
