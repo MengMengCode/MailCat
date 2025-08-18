@@ -1,515 +1,329 @@
-# MailCat
+<div align="center">
 
-基于Go + Vue.js的现代化邮件接收和管理系统，可以接收来自Cloudflare Worker的邮件数据并存储到SQLite3数据库中，提供美观的Web管理界面。
+# 📧 MailCat
 
-## 功能特性
+**现代化邮件接收与管理系统**
 
-- 🚀 接收来自Cloudflare Worker转发的邮件数据
-- 💾 将邮件存储到本地SQLite3数据库
-- 🌐 现代化Vue.js前端管理界面
-- 📊 实时邮件统计和管理
-- 🔍 邮件搜索和详情查看
-- 🔐 安全的身份验证机制
-- 📱 响应式设计，支持移动端
-- ⚡ RESTful API支持
-- 📄 分页查询支持
-- 🏥 健康检查端点
+[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go)](https://golang.org/)
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker)](https://hub.docker.com/)
 
-## 项目结构
+</div>
 
-```
-mailcat/
-├── main.go                           # 主程序入口
-├── go.mod                           # Go模块文件
-├── go.sum                           # Go依赖锁定文件
-├── README.md                        # 项目文档
-├── .gitignore                       # Git忽略文件
-├── config/
-│   └── config.yaml                  # 配置文件
-├── internal/                        # Go后端代码
-│   ├── config/
-│   │   └── config.go               # 配置管理
-│   ├── models/
-│   │   └── email.go                # 数据模型
-│   ├── database/
-│   │   └── database.go             # 数据库操作
-│   ├── handlers/
-│   │   ├── email.go                # 邮件API处理器
-│   │   └── admin.go                # 管理员API处理器
-│   ├── router/
-│   │   └── router.go               # 路由设置
-│   └── utils/
-│       └── email_parser.go         # 邮件解析工具
-├── web/                            # 前端资源
-│   └── frontend/                   # Vue.js前端应用
-│       ├── index.html              # 入口HTML
-│       ├── package.json            # 前端依赖
-│       ├── package-lock.json       # 前端依赖锁定
-│       ├── vite.config.js          # Vite构建配置
-│       └── src/                    # Vue源码
-│           ├── main.js             # 前端入口
-│           ├── App.vue             # 根组件
-│           ├── router/
-│           │   └── index.js        # 前端路由
-│           ├── views/              # 页面组件
-│           │   ├── Login.vue       # 登录页面
-│           │   └── Dashboard.vue   # 管理面板
-│           ├── components/         # 通用组件
-│           │   └── EmailDetailDialog.vue  # 邮件详情对话框
-│           └── services/
-│               └── api.js          # API服务
-├── cloudflare-worker/              # Cloudflare Worker代码
-│   └── worker.js                   # Worker脚本
-└── data/                          # 数据库文件目录（自动创建）
-    └── emails.db                  # SQLite数据库
-```
+---
 
-## 快速开始
+## 📋 目录
 
-### 1. 安装后端依赖
+- [✨ 功能特性](#-功能特性)
+- [🚀 快速开始](#-快速开始)
+  - [源码构建运行](#1-源码构建运行)
+  - [Docker Compose 部署](#2-docker-compose-部署)
+  - [Docker Run 部署](#3-docker-run-部署)
+- [☁️ Cloudflare Worker 配置](#️-cloudflare-worker-配置)
+- [📡 API 使用说明](#-api-使用说明)
+- [🖼️ 界面预览](#️-界面预览)
+- [⚙️ 配置说明](#️-配置说明)
+- [🤝 贡献指南](#-贡献指南)
+- [📄 许可证](#-许可证)
+
+---
+
+## ✨ 功能特性
+
+MailCat 是一个基于 **Go + Vue.js** 的现代化邮件接收与管理系统，具有以下特性：
+
+🔹 **轻量高效** - 基于 Go 语言开发，性能优异，资源占用低  
+🔹 **现代化界面** - Vue.js 3 + Element Plus 构建的响应式 Web 界面  
+🔹 **云端集成** - 完美集成 Cloudflare Worker，实现邮件转发  
+🔹 **数据持久化** - 使用 SQLite3 数据库，轻量且可靠  
+🔹 **RESTful API** - 提供完整的 API 接口，支持第三方集成  
+🔹 **容器化部署** - 支持 Docker 一键部署，开箱即用  
+🔹 **安全认证** - 支持 Token 认证和管理员密码保护  
+🔹 **分页查询** - 支持大量邮件的分页浏览和管理  
+
+---
+
+## 🚀 快速开始
+
+### 1. 源码构建运行
 
 ```bash
+# 克隆项目
+git clone https://github.com/MengMengCode/MailCat.git
+cd mailcat
+
+# 安装 Go 依赖
 go mod tidy
-```
 
-### 2. 构建前端
-
-```bash
+# 构建前端资源
 cd web/frontend
-npm install
-npm run build
+npm install && npm run build
 cd ../..
-```
 
-### 3. 配置
-
-编辑 `config/config.yaml` 文件：
-
-```yaml
-server:
-  port: "8080"
-  host: "0.0.0.0"
-
-database:
-  path: "./data/emails.db"
-
-api:
-  auth_token: "your-secret-token-here"  # 请修改为安全的令牌
-
-admin:
-  password: "your-admin-password"       # 请修改为安全的密码
-```
-
-### 4. 运行服务
-
-```bash
+# 启动服务
 go run main.go
 ```
 
-服务将在 `http://localhost:8080` 启动。
+✅ 服务启动后访问：**http://server-ip:8080**
 
-### 5. 访问管理界面
+---
 
-- 管理面板: `http://localhost:8080/admin/`
-- 登录页面: `http://localhost:8080/admin/login`
-- API健康检查: `http://localhost:8080/health`
+### 2. Docker Compose 部署
 
-默认管理员密码请在配置文件中设置。
+创建 `docker-compose.yml` 文件：
 
-### 6. 配置Cloudflare Worker
+```yaml
+version: '3.8'
 
-1. 在Cloudflare Dashboard中创建新的Worker
-2. 复制 `cloudflare-worker/worker.js` 中的代码
-3. 设置环境变量：
-   
-   在Worker设置页面的"变量和机密"部分添加：
-   
-   | 类型 | 名称 | 值 |
-   |------|------|-----|
-   | 纯文本 | `API_ENDPOINT` | `https://your-domain.com` |
-   | 机密 | `API_TOKEN` | `your-secret-token-here` |
-   
-   **重要提示：**
-   - 🌐 **`API_ENDPOINT` 必须使用域名，不能使用IP地址**（Cloudflare Worker限制）
-   - ✅ 正确格式：`https://api.example.com` 或 `http://your-domain.com`
-   - ❌ 错误格式：`http://192.168.1.100:8080` 或 `http://localhost:8080`
-   - 🔒 `API_TOKEN` 建议设置为"机密"类型而不是"纯文本"，这样更安全
-   - 🔑 `API_TOKEN` 的值必须与您的 `config/config.yaml` 中的 `auth_token` 完全一致
-   - 🔐 推荐使用HTTPS以确保数据传输安全
+services:
+  mailcat:
+    image: mengmengcode/mailcat:latest
+    container_name: mailcat
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - MAILCAT_API_AUTH_TOKEN=your_secure_api_token_here
+      - MAILCAT_ADMIN_PASSWORD=your_secure_admin_password_here
+    volumes:
+      - mailcat_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-4. 配置邮件路由规则
-5. 部署后访问Worker域名查看连接状态
-
-#### Worker状态页面
-
-部署Worker后，可以通过以下方式检查连接状态：
-
-- **状态页面**: 访问Worker域名根路径（如 `https://your-worker.your-subdomain.workers.dev/`）
-  - 显示与Go API的连接状态
-  - 显示配置信息
-  - 提供实时状态检查
-
-- **Health API**: 访问 `/health` 端点获取JSON格式的状态信息
-  ```json
-  {
-    "status": "healthy",
-    "message": "API服务器响应正常 (状态码: 200)",
-    "timestamp": "2024-01-01T12:00:00.000Z",
-    "api_endpoint": "https://your-domain.com",
-    "token_configured": true
-  }
-  ```
-
-## API端点
-
-### 公开端点
-
-#### 健康检查
-```
-GET /health
+volumes:
+  mailcat_data:
+    driver: local
 ```
 
-### 邮件API端点（需要API Token认证）
+启动服务：
 
-#### 接收邮件（由Cloudflare Worker调用）
-```
-POST /api/v1/emails
-Authorization: Bearer <your-api-token>
-Content-Type: application/json
-
-{
-  "from": "sender@example.com",
-  "to": "recipient@example.com",
-  "subject": "邮件主题",
-  "body": "邮件正文",
-  "html_body": "<html>HTML邮件内容</html>",
-  "headers": {
-    "header-name": "header-value"
-  }
-}
-```
-
-#### 获取邮件列表
-```
-GET /api/v1/emails?page=1&limit=20
-Authorization: Bearer <your-api-token>
-# 或者使用查询参数
-GET /api/v1/emails?token=your-api-token&page=1&limit=20
-```
-
-#### 获取单个邮件
-```
-GET /api/v1/emails/{id}
-Authorization: Bearer <your-api-token>
-```
-
-### 管理员Web端点
-
-#### 前端应用
-```
-GET /admin/                    # 管理面板首页
-GET /admin/login              # 登录页面
-GET /admin/dashboard          # 仪表板页面
-```
-
-#### 管理员认证
-```
-POST /admin/login
-Content-Type: application/json
-
-{
-  "password": "your-admin-password"
-}
-```
-
-```
-POST /admin/logout
-```
-
-### 管理员API端点（需要管理员Session认证）
-
-#### 获取统计信息
-```
-GET /admin/api/stats
-Cookie: admin_session=<session-token>
-```
-
-#### 获取邮件列表（管理员视图）
-```
-GET /admin/api/emails?page=1&limit=20
-Cookie: admin_session=<session-token>
-```
-
-#### 获取单个邮件详情
-```
-GET /admin/api/emails/{id}
-Cookie: admin_session=<session-token>
-```
-
-#### 获取配置信息
-```
-GET /admin/api/config
-Cookie: admin_session=<session-token>
-```
-
-#### 保存配置信息
-```
-POST /admin/api/config
-Cookie: admin_session=<session-token>
-Content-Type: application/json
-
-{
-  "api_token": "new-api-token",
-  "admin_password": "new-admin-password"
-}
-```
-
-### API查询参数说明
-
-#### 邮件列表查询参数：
-- `page`: 页码（默认：1，最小值：1）
-- `limit`: 每页数量（默认：20，范围：1-100）
-- `token`: API认证令牌（仅用于API端点，也可使用Authorization头部）
-
-#### 查询示例：
 ```bash
-# 查询第1页，每页20条（默认）
-GET /api/v1/emails?token=your-api-token
-
-# 查询第2页，每页50条
-GET /api/v1/emails?token=your-api-token&page=2&limit=50
-
-# 获取最多100条邮件
-GET /api/v1/emails?token=your-api-token&limit=100
+docker-compose up -d
 ```
 
-## 响应格式
+---
 
-### 邮件列表响应
+### 3. Docker Run 部署
+
+```bash
+docker run -d \
+  --name mailcat \
+  --restart unless-stopped \
+  -p 8080:8080 \
+  -e MAILCAT_API_AUTH_TOKEN=your_secure_api_token_here \
+  -e MAILCAT_ADMIN_PASSWORD=your_secure_admin_password_here \
+  -v mailcat_data:/app/data \
+  mengmengcode/mailcat:latest
+```
+
+---
+
+## ☁️ Cloudflare Worker 配置
+
+### 步骤 1：创建 Worker
+
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. 进入 **Workers & Pages** 页面
+3. 点击 **创建应用程序** → **创建 Worker**
+
+### 步骤 2：部署代码
+
+复制 [`cloudflare-worker/worker.js`](cloudflare-worker/worker.js) 中的代码到 Worker 编辑器
+
+### 步骤 3：配置环境变量
+
+在 Worker 的 **设置** → **变量和机密** 中添加：
+
+| 变量类型 | 变量名称 | 变量值 | 说明 |
+|---------|---------|--------|------|
+| **环境变量** | `API_ENDPOINT` | `https://your.domain.com` | MailCat 服务地址 |
+| **机密** | `API_TOKEN` | `your_secure_api_token_here` | API 认证令牌 |
+
+> ⚠️ **重要提醒**
+> - `API_ENDPOINT` 必须使用完整域名（不支持 IP 或 localhost）
+> - `API_TOKEN` 必须与 MailCat 服务配置保持一致
+> - 强烈建议使用 HTTPS 确保数据传输安全
+
+### 步骤 4：配置邮件路由
+
+1. 在 Cloudflare Dashboard 中进入你的域名管理
+2. 转到 **电子邮件** → **电子邮件路由**
+3. 添加路由规则，将邮件转发到 Worker
+
+### 步骤 5：测试连接
+
+访问 Worker 域名，查看连接状态和健康检查结果。
+
+---
+
+## 📡 API 使用说明
+
+### 基础信息
+
+- **基础 URL**：`https://your.domain.com/api/v1`
+- **认证方式**：Bearer Token 或 URL 参数
+- **数据格式**：JSON
+
+### 邮件查询接口
+
+#### 端点地址
+```
+GET /api/v1/emails
+```
+
+#### 认证方式
+
+**方式一：URL 参数**
+```
+https://your.domain.com/api/v1/emails?token=your_auth_token
+```
+
+**方式二：请求头**
+```bash
+curl -H "Authorization: Bearer your_auth_token" \
+     https://your.domain.com/api/v1/emails
+```
+
+#### 查询参数
+
+| 参数名 | 类型 | 默认值 | 范围 | 说明 |
+|--------|------|--------|------|------|
+| `page` | integer | `1` | ≥ 1 | 页码 |
+| `limit` | integer | `20` | 1-100 | 每页数量 |
+| `token` | string | - | - | 认证令牌（可选，如使用请求头认证） |
+
+#### 使用示例
+
+**默认查询（第1页，20条）**
+```bash
+curl "https://your.domain.com/api/v1/emails?token=your_auth_token"
+```
+
+**分页查询（第2页，50条）**
+```bash
+curl "https://your.domain.com/api/v1/emails?token=your_auth_token&page=2&limit=50"
+```
+
+**获取所有邮件（分页遍历）**
+```bash
+# 第一次请求获取总数
+curl "https://your.domain.com/api/v1/emails?token=your_auth_token&limit=100"
+
+# 根据返回的 total 字段计算总页数，然后逐页查询
+curl "https://your.domain.com/api/v1/emails?token=your_auth_token&page=2&limit=100"
+```
+
+#### 响应示例
+
 ```json
 {
   "emails": [
     {
       "id": 1,
       "from": "sender@example.com",
-      "to": "recipient@example.com",
-      "subject": "邮件主题",
-      "body": "邮件正文",
-      "html_body": "<html>HTML内容</html>",
-      "headers": "{\"header\":\"value\"}",
-      "received_at": "2024-01-01T12:00:00Z",
-      "created_at": "2024-01-01T12:00:00Z"
+      "to": "recipient@yourdomain.com",
+      "subject": "欢迎使用 MailCat",
+      "body": "这是邮件的纯文本内容",
+      "html_body": "<p>这是 <strong>HTML</strong> 格式的邮件内容</p>",
+      "headers": "{\"Content-Type\":\"text/html; charset=utf-8\",\"Date\":\"Mon, 01 Jan 2025 12:00:00 +0000\"}",
+      "received_at": "2025-01-01T12:00:00Z",
+      "created_at": "2025-01-01T12:00:00Z"
     }
   ],
-  "total": 100,
-  "page": 1,
-  "limit": 20
+  "pagination": {
+    "total": 150,
+    "page": 1,
+    "limit": 20,
+    "total_pages": 8
+  }
 }
 ```
 
-## 身份验证
+#### 错误响应
 
-### API认证（用于邮件API）
-
-API使用Bearer Token进行身份验证。可以通过以下方式提供令牌：
-
-1. **HTTP Header**: `Authorization: Bearer <your-api-token>`
-2. **Query Parameter**: `?token=<your-api-token>`
-
-API Token在 `config/config.yaml` 中的 `api.auth_token` 字段配置。
-
-### 管理员认证（用于Web管理界面）
-
-管理员使用Session Cookie进行身份验证：
-
-1. **登录**: POST `/admin/login` 使用密码登录
-2. **Session**: 登录成功后会设置 `admin_session` Cookie
-3. **认证**: 后续请求会自动携带Cookie进行认证
-4. **登出**: POST `/admin/logout` 清除Session
-
-管理员密码在 `config/config.yaml` 中的 `admin.password` 字段配置。
-
-### 安全建议
-
-- 🔐 使用强密码作为API Token和管理员密码
-- 🔒 在生产环境中使用HTTPS
-- 🔑 定期更换认证凭据
-- 🚫 不要在日志中记录敏感信息
-
-## 数据库
-
-使用SQLite3数据库存储邮件数据。数据库文件会自动创建在配置指定的路径。
-
-### 邮件表结构
-```sql
-CREATE TABLE emails (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    from_address TEXT NOT NULL,
-    to_address TEXT NOT NULL,
-    subject TEXT,
-    body TEXT,
-    html_body TEXT,
-    headers TEXT,
-    received_at DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+```json
+{
+  "error": "Unauthorized",
+  "message": "Invalid or missing authentication token",
+  "code": 401
+}
 ```
 
-## 部署
+---
 
-### 使用systemd（Linux）
 
-1. 创建服务文件 `/etc/systemd/system/mailcat.service`：
 
-```ini
-[Unit]
-Description=MailCat Service
-After=network.target
+## ⚙️ 配置说明
 
-[Service]
-Type=simple
-User=your-user
-WorkingDirectory=/path/to/mailcat
-ExecStart=/path/to/mailcat/mailcat
-Restart=always
-RestartSec=5
+### 环境变量
 
-[Install]
-WantedBy=multi-user.target
-```
+| 变量名 | 默认值 | 说明 |
+|--------|--------|------|
+| `MAILCAT_API_AUTH_TOKEN` | - | API 认证令牌（必填） |
+| `MAILCAT_ADMIN_PASSWORD` | - | 管理员密码（必填） |
+| `MAILCAT_PORT` | `8080` | 服务监听端口 |
+| `MAILCAT_DB_PATH` | `./data/mailcat.db` | SQLite 数据库文件路径 |
 
-2. 启用并启动服务：
+### 配置文件
 
-```bash
-sudo systemctl enable mailcat
-sudo systemctl start mailcat
-```
-
-### 使用Docker
-
-创建 `Dockerfile`：
-
-```dockerfile
-# 前端构建阶段
-FROM node:18-alpine AS frontend-builder
-WORKDIR /app/web/frontend
-COPY web/frontend/package*.json ./
-RUN npm ci
-COPY web/frontend/ ./
-RUN npm run build
-
-# 后端构建阶段
-FROM golang:1.21-alpine AS backend-builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN go build -o mailcat main.go
-
-# 最终运行阶段
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates
-WORKDIR /root/
-COPY --from=backend-builder /app/mailcat .
-COPY --from=backend-builder /app/config ./config
-COPY --from=frontend-builder /app/web/frontend/dist ./web/dist
-CMD ["./mailcat"]
-```
-
-构建并运行：
-
-```bash
-docker build -t mailcat .
-docker run -p 8080:8080 -v $(pwd)/data:/root/data mailcat
-```
-
-### 使用Docker Compose
-
-创建 `docker-compose.yml`：
+项目支持通过 [`config/config.yaml`](config/config.yaml) 进行配置：
 
 ```yaml
-version: '3.8'
-services:
-  mailcat:
-    build: .
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./data:/root/data
-      - ./config:/root/config
-    environment:
-      - GIN_MODE=release
-    restart: unless-stopped
+server:
+  port: 8080
+  host: "0.0.0.0"
+
+database:
+  path: "./data/mailcat.db"
+
+auth:
+  api_token: "your_secure_api_token_here"
+  admin_password: "your_secure_admin_password_here"
 ```
 
-运行：
+---
 
-```bash
-docker-compose up -d
-```
+## 🤝 贡献指南
 
-## 安全建议
+我们欢迎所有形式的贡献！
 
-1. 使用强密码作为API令牌
-2. 在生产环境中使用HTTPS
-3. 定期备份数据库文件
-4. 限制API访问的IP地址
-5. 监控日志文件
+### 开发环境搭建
 
-## 故障排除
-
-### 常见问题
-
-1. **数据库连接失败**
-   - 检查数据库文件路径权限
-   - 确保目录存在
-   - 验证SQLite3是否正确安装
-
-2. **API认证失败**
-   - 检查API令牌是否正确
-   - 确认Authorization Header格式正确
-   - 验证config.yaml中的auth_token配置
-
-3. **管理员登录失败**
-   - 检查管理员密码是否正确
-   - 确认config.yaml中的admin.password配置
-   - 清除浏览器Cookie后重试
-
-4. **前端页面无法访问**
-   - 确认前端已正确构建：`cd web/frontend && npm run build`
-   - 检查web/dist目录是否存在
-   - 验证Vite构建是否成功
-
-5. **Cloudflare Worker无法连接**
-   - 检查API端点地址（必须使用域名，不能使用IP）
-   - 确认防火墙设置
-   - 验证SSL证书
-   - 检查Worker环境变量配置
-
-6. **邮件内容显示异常**
-   - 检查邮件编码格式
-   - 验证MIME解析是否正确
-   - 查看服务器日志获取详细错误信息
-
-### 开发调试
-
-1. **启用调试模式**
+1. **克隆项目**
    ```bash
-   GIN_MODE=debug go run main.go
+   git clone https://github.com/your-repo/mailcat.git
+   cd mailcat
    ```
 
-2. **查看详细日志**
-   - 检查控制台输出
-   - 使用浏览器开发者工具查看网络请求
-   - 检查API响应状态码和错误信息
+2. **后端开发**
+   ```bash
+   go mod tidy
+   go run main.go
+   ```
 
-3. **前端开发模式**
+3. **前端开发**
    ```bash
    cd web/frontend
+   npm install
    npm run dev
    ```
-   然后访问 `http://localhost:5173` 进行前端开发调试。
 
-## 许可证
+---
 
-MIT License
+## 📄 许可证
+
+本项目基于 [MIT License](LICENSE) 开源协议发布。
+
+---
+
+<div align="center">
+
+**⭐ 如果这个项目对您有帮助，请给我们一个 Star！**
+
+Made with ❤️ by MailCat Team
+
+</div>
