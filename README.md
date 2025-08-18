@@ -316,7 +316,7 @@ auth:
 
 ## 📄 许可证
 
-本项目基于 [MIT License](LICENSE) 开源协议发布。
+本项目基于 [GNU General Public License v3.0](LICENSE) 开源协议发布。
 
 ---
 
