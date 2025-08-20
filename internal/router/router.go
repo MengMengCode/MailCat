@@ -39,6 +39,11 @@ func SetupRouter(db *database.DB, authToken string, adminPassword string) *gin.E
 	// 公开端点
 	r.GET("/health", emailHandler.HealthCheck)
 	
+	// 根路径重定向到管理员登录页面
+	r.GET("/", func(c *gin.Context) {
+		c.Redirect(302, "/admin/login")
+	})
+	
 	// API路由组
 	api := r.Group("/api/v1")
 	{
