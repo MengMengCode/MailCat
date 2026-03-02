@@ -3,10 +3,8 @@ package router
 import (
 	"mailcat/internal/database"
 	"mailcat/internal/handlers"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"time"
 )
 
 func SetupRouter(db *database.DB, authToken string, adminPassword string) *gin.Engine {
@@ -33,15 +31,7 @@ func SetupRouter(db *database.DB, authToken string, adminPassword string) *gin.E
 		c.Next()
 	})
 	
-	// 配置CORS — 仅允许同源请求
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{}, // 不允许跨域
-		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-Admin-Session"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: false,
-		MaxAge:           12 * time.Hour,
-	}))
+	// 同源部署，不启用 CORS（浏览器默认阻止跨域请求）
 
 	// 请求体大小限制中间件
 	r.Use(func(c *gin.Context) {
