@@ -25,12 +25,24 @@ func NewEmailHandler(db *database.DB, authToken string) *EmailHandler {
 	}
 }
 
-// AuthMiddleware 验证API令牌（仅支持 Authorization 请求头）
+// AuthMiddleware 验证API令牌（支持 Authorization 请求头和 URL query 参数）
 func (h *EmailHandler) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.GetHeader("Authorization")
+		authorized := false
 
-		if token != "Bearer "+h.authToken {
+		// 方式1：Authorization: Bearer <token> 请求头
+		if header := c.GetHeader("Authorization"); header == "Bearer "+h.authToken {
+			authorized = true
+		}
+
+		// 方式2：URL query 参数 ?token=<token>
+		if !authorized {
+			if queryToken := c.Query("token"); queryToken == h.authToken {
+				authorized = true
+			}
+		}
+
+		if !authorized {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Unauthorized",
 			})
