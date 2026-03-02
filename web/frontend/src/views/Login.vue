@@ -56,6 +56,14 @@ export default {
     const password = ref('')
     const loading = ref(false)
     const error = ref('')
+
+    // 使用 Web Crypto API 计算 SHA-256 哈希
+    const sha256 = async (message) => {
+      const msgBuffer = new TextEncoder().encode(message)
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer)
+      const hashArray = Array.from(new Uint8Array(hashBuffer))
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+    }
     
     const handleLogin = async () => {
       if (!password.value.trim()) {
@@ -67,7 +75,9 @@ export default {
       error.value = ''
       
       try {
-        const response = await authAPI.login(password.value)
+        // 对密码进行 SHA-256 哈希后再传输，避免明文传输
+        const hashedPassword = await sha256(password.value)
+        const response = await authAPI.login(hashedPassword)
         
         if (response.data.session) {
           localStorage.setItem('admin_session', response.data.session)

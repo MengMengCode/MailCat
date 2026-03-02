@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,17 +12,25 @@ import (
 )
 
 type AdminHandler struct {
-	db           *database.DB
-	authToken    string
-	adminPassword string
+	db               *database.DB
+	authToken        string
+	adminPassword    string
+	adminPasswordHash string
 }
 
 func NewAdminHandler(db *database.DB, authToken, adminPassword string) *AdminHandler {
 	return &AdminHandler{
-		db:           db,
-		authToken:    authToken,
-		adminPassword: adminPassword,
+		db:               db,
+		authToken:        authToken,
+		adminPassword:    adminPassword,
+		adminPasswordHash: sha256Hex(adminPassword),
 	}
+}
+
+// sha256Hex 计算字符串的 SHA-256 哈希值并返回十六进制字符串
+func sha256Hex(s string) string {
+	h := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(h[:])
 }
 
 // AdminAuthMiddleware 管理员认证中间件
@@ -35,8 +45,8 @@ func (h *AdminHandler) AdminAuthMiddleware() gin.HandlerFunc {
 			}
 		}
 		
-		// 简单的session验证（实际项目中应该使用更安全的方式）
-		if session != "admin_logged_in_"+h.adminPassword {
+		// 使用密码哈希值验证 session
+		if session != "admin_logged_in_"+h.adminPasswordHash {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Unauthorized",
 			})
@@ -61,15 +71,16 @@ func (h *AdminHandler) Login(c *gin.Context) {
 		return
 	}
 	
-	if loginReq.Password != h.adminPassword {
+	// 前端发送的是 SHA-256 哈希后的密码，与服务端哈希比较
+	if loginReq.Password != h.adminPasswordHash {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "Invalid password",
 		})
 		return
 	}
 	
-	// 设置session cookie
-	sessionToken := "admin_logged_in_" + h.adminPassword
+	// 使用密码哈希值生成 session token，避免明文泄露
+	sessionToken := "admin_logged_in_" + h.adminPasswordHash
 	c.SetCookie("admin_session", sessionToken, 3600*24, "/", "", false, true)
 	
 	c.JSON(http.StatusOK, gin.H{

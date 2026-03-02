@@ -551,7 +551,9 @@ export default {
       loadEmails(event.page + 1)
     }
 
-    const viewEmailDetail = (email) => {
+    const viewEmailDetail = (emailOrEvent) => {
+      // @row-click 传递 { originalEvent, data, index }，按钮直接传递 data
+      const email = emailOrEvent.data || emailOrEvent
       selectedEmailId.value = email.id
       showEmailDialog.value = true
     }
