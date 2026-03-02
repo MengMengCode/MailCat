@@ -320,6 +320,9 @@ func TryParseEmailContent(rawBody, htmlBody string, headersJSON string) (string,
 func ParseMIMEContent(content string) (*EmailContent, error) {
 	result := &EmailContent{}
 	
+	// 规范化换行符
+	content = normalizeLineEndings(content)
+	
 	// 检测MIME边界
 	boundary := detectMIMEBoundary(content)
 	if boundary == "" {
@@ -400,6 +403,8 @@ func ParseMIMEContent(content string) (*EmailContent, error) {
 
 // detectMIMEBoundary 检测MIME边界标识符
 func detectMIMEBoundary(content string) string {
+	// 规范化换行符
+	content = normalizeLineEndings(content)
 	lines := strings.Split(content, "\r\n")
 	
 	for _, line := range lines {
@@ -475,4 +480,36 @@ func assignContentByType(result *EmailContent, content, contentType string) {
 			result.HTMLBody = content
 		}
 	}
+}
+
+// normalizeLineEndings 统一将换行符规范化为 \r\n
+func normalizeLineEndings(content string) string {
+	content = strings.ReplaceAll(content, "\r\n", "\n")
+	content = strings.ReplaceAll(content, "\r", "\n")
+	content = strings.ReplaceAll(content, "\n", "\r\n")
+	return content
+}
+
+// IsQuotedPrintable 检查内容是否包含 Quoted-Printable 编码特征
+func IsQuotedPrintable(content string) bool {
+	// 典型 QP 特征：=3D (编码的=号), =XX 十六进制编码
+	qpPatterns := []string{"=3D", "=3d", "=20", "=C2", "=c2", "=E2", "=e2", "=09"}
+	count := 0
+	for _, p := range qpPatterns {
+		if strings.Contains(content, p) {
+			count++
+		}
+	}
+	return count >= 2
+}
+
+// DecodeQuotedPrintable 解码 Quoted-Printable 编码的内容
+func DecodeQuotedPrintable(content string) (string, error) {
+	normalized := normalizeLineEndings(content)
+	reader := quotedprintable.NewReader(strings.NewReader(normalized))
+	decoded, err := io.ReadAll(reader)
+	if err != nil {
+		return content, err
+	}
+	return string(decoded), nil
 }

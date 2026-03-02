@@ -7,7 +7,8 @@
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go)](https://golang.org/)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg?style=flat-square)](LICENSE)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker)](https://hub.docker.com/)
+[![Docker](https://img.shields.io/badge/Docker-ghcr.io-2496ED?style=flat-square&logo=docker)](https://github.com/MengMengCode/MailCat/pkgs/container/mailcat)
+[![CI](https://img.shields.io/github/actions/workflow/status/MengMengCode/MailCat/docker-publish.yml?style=flat-square&label=Build)](https://github.com/MengMengCode/MailCat/actions)
 
 </div>
 
@@ -16,14 +17,15 @@
 ## 📋 目录
 
 - [✨ 功能特性](#-功能特性)
+- [🔒 安全特性](#-安全特性)
 - [🚀 快速开始](#-快速开始)
-  - [源码构建运行](#1-源码构建运行)
-  - [Docker Compose 部署](#2-docker-compose-部署)
-  - [Docker Run 部署](#3-docker-run-部署)
+  - [Docker Compose 部署（推荐）](#1-docker-compose-部署推荐)
+  - [Docker Run 部署](#2-docker-run-部署)
+  - [源码构建运行](#3-源码构建运行)
 - [☁️ Cloudflare Worker 配置](#️-cloudflare-worker-配置)
 - [📡 API 使用说明](#-api-使用说明)
-- [🖼️ 界面预览](#️-界面预览)
 - [⚙️ 配置说明](#️-配置说明)
+- [🔄 升级指南](#-升级指南)
 - [🤝 贡献指南](#-贡献指南)
 - [📄 许可证](#-许可证)
 
@@ -34,42 +36,34 @@
 MailCat 是一个基于 **Go + Vue.js** 的现代化邮件接收与管理系统，具有以下特性：
 
 🔹 **轻量高效** - 基于 Go 语言开发，性能优异，资源占用低  
-🔹 **现代化界面** - Vue.js 3 + Element Plus 构建的响应式 Web 界面  
+🔹 **现代化界面** - Vue.js 3 + PrimeVue 构建的响应式 Web 界面  
 🔹 **云端集成** - 完美集成 Cloudflare Worker，实现邮件转发  
 🔹 **数据持久化** - 使用 SQLite3 数据库，轻量且可靠  
 🔹 **RESTful API** - 提供完整的 API 接口，支持第三方集成  
-🔹 **容器化部署** - 支持 Docker 一键部署，开箱即用  
-🔹 **安全认证** - 支持 Token 认证和管理员密码保护  
+🔹 **容器化部署** - 支持 Docker 一键部署，镜像托管于 GitHub Container Registry  
+🔹 **安全认证** - 双端哈希密码传输、随机 Session、速率限制  
 🔹 **分页查询** - 支持大量邮件的分页浏览和管理  
+
+---
+
+## 🔒 安全特性
+
+| 特性 | 说明 |
+|------|------|
+| **双端密码哈希** | 前端 SHA-256 哈希后传输，服务端 HMAC 安全比较，密码不明文传输 |
+| **随机 Session Token** | 每次登录生成加密安全的随机 Token，不可预测 |
+| **登录速率限制** | 5 次失败后锁定 15 分钟，防暴力破解 |
+| **XSS 防护** | 邮件 HTML 使用 `sandbox` iframe 渲染，隔离恶意脚本 |
+| **安全响应头** | 自动添加 `X-Content-Type-Options`、`X-Frame-Options`、`X-XSS-Protection` 等 |
+| **请求体限制** | 10MB 请求体大小限制，防止 DoS 攻击 |
+| **CORS 收紧** | 默认禁止跨域请求 |
+| **API Token 脱敏** | 管理面板仅显示脱敏后的 Token |
 
 ---
 
 ## 🚀 快速开始
 
-### 1. 源码构建运行
-
-```bash
-# 克隆项目
-git clone https://github.com/MengMengCode/MailCat.git
-cd mailcat
-
-# 安装 Go 依赖
-go mod tidy
-
-# 构建前端资源
-cd web/frontend
-npm install && npm run build
-cd ../..
-
-# 启动服务
-go run main.go
-```
-
-✅ 服务启动后访问：**http://server-ip:8080**
-
----
-
-### 2. Docker Compose 部署
+### 1. Docker Compose 部署（推荐）
 
 创建 `docker-compose.yml` 文件：
 
@@ -78,18 +72,23 @@ version: '3.8'
 
 services:
   mailcat:
-    image: mengmengcode/mailcat:latest
+    image: ghcr.io/mengmengcode/mailcat:latest
     container_name: mailcat
     restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
+      # API 认证令牌 - 用于 Cloudflare Worker 调用 API（请修改为安全的随机字符串）
       - MAILCAT_API_AUTH_TOKEN=your_secure_api_token_here
+      # 管理员密码 - 用于 Web 管理界面登录（请修改为强密码）
       - MAILCAT_ADMIN_PASSWORD=your_secure_admin_password_here
+      # 时区设置
+      - TZ=Asia/Shanghai
     volumes:
+      # 数据持久化 - SQLite 数据库文件
       - mailcat_data:/app/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -102,12 +101,14 @@ volumes:
 启动服务：
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
+
+✅ 服务启动后访问：**http://your-server-ip:8080**
 
 ---
 
-### 3. Docker Run 部署
+### 2. Docker Run 部署
 
 ```bash
 docker run -d \
@@ -116,11 +117,35 @@ docker run -d \
   -p 8080:8080 \
   -e MAILCAT_API_AUTH_TOKEN=your_secure_api_token_here \
   -e MAILCAT_ADMIN_PASSWORD=your_secure_admin_password_here \
+  -e TZ=Asia/Shanghai \
   -v mailcat_data:/app/data \
-  mengmengcode/mailcat:latest
+  ghcr.io/mengmengcode/mailcat:latest
 ```
 
 ---
+
+### 3. 源码构建运行
+
+```bash
+# 克隆项目
+git clone https://github.com/MengMengCode/MailCat.git
+cd MailCat
+
+# 构建前端资源
+cd web/frontend
+npm install && npm run build
+cd ../..
+
+# 设置环境变量
+export MAILCAT_API_AUTH_TOKEN=your_secure_api_token_here
+export MAILCAT_ADMIN_PASSWORD=your_secure_admin_password_here
+
+# 安装 Go 依赖并启动
+go mod tidy
+go run main.go
+```
+
+✅ 服务启动后访问：**http://localhost:8080**
 
 ## ☁️ Cloudflare Worker 配置
 
@@ -165,7 +190,7 @@ docker run -d \
 ### 基础信息
 
 - **基础 URL**：`https://your.domain.com/api/v1`
-- **认证方式**：Bearer Token 或 URL 参数
+- **认证方式**：`Authorization: Bearer <token>` 请求头
 - **数据格式**：JSON
 
 ### 邮件查询接口
@@ -177,12 +202,6 @@ GET /api/v1/emails
 
 #### 认证方式
 
-**方式一：URL 参数**
-```
-https://your.domain.com/api/v1/emails?token=your_auth_token
-```
-
-**方式二：请求头**
 ```bash
 curl -H "Authorization: Bearer your_auth_token" \
      https://your.domain.com/api/v1/emails
@@ -194,27 +213,25 @@ curl -H "Authorization: Bearer your_auth_token" \
 |--------|------|--------|------|------|
 | `page` | integer | `1` | ≥ 1 | 页码 |
 | `limit` | integer | `20` | 1-100 | 每页数量 |
-| `token` | string | - | - | 认证令牌（可选，如使用请求头认证） |
 
 #### 使用示例
 
 **默认查询（第1页，20条）**
 ```bash
-curl "https://your.domain.com/api/v1/emails?token=your_auth_token"
+curl -H "Authorization: Bearer your_auth_token" \
+     "https://your.domain.com/api/v1/emails"
 ```
 
 **分页查询（第2页，50条）**
 ```bash
-curl "https://your.domain.com/api/v1/emails?token=your_auth_token&page=2&limit=50"
+curl -H "Authorization: Bearer your_auth_token" \
+     "https://your.domain.com/api/v1/emails?page=2&limit=50"
 ```
 
-**获取所有邮件（分页遍历）**
+**获取单封邮件详情**
 ```bash
-# 第一次请求获取总数
-curl "https://your.domain.com/api/v1/emails?token=your_auth_token&limit=100"
-
-# 根据返回的 total 字段计算总页数，然后逐页查询
-curl "https://your.domain.com/api/v1/emails?token=your_auth_token&page=2&limit=100"
+curl -H "Authorization: Bearer your_auth_token" \
+     "https://your.domain.com/api/v1/emails/1"
 ```
 
 #### 响应示例
@@ -261,29 +278,69 @@ curl "https://your.domain.com/api/v1/emails?token=your_auth_token&page=2&limit=1
 
 ### 环境变量
 
-| 变量名 | 默认值 | 说明 |
-|--------|--------|------|
-| `MAILCAT_API_AUTH_TOKEN` | - | API 认证令牌（必填） |
-| `MAILCAT_ADMIN_PASSWORD` | - | 管理员密码（必填） |
-| `MAILCAT_PORT` | `8080` | 服务监听端口 |
-| `MAILCAT_DB_PATH` | `./data/mailcat.db` | SQLite 数据库文件路径 |
+| 变量名 | 必填 | 默认值 | 说明 |
+|--------|:----:|--------|------|
+| `MAILCAT_API_AUTH_TOKEN` | ✅ | - | API 认证令牌（Cloudflare Worker 使用） |
+| `MAILCAT_ADMIN_PASSWORD` | ✅ | - | 管理员登录密码 |
+| `MAILCAT_SERVER_PORT` | ❌ | `8080` | 服务监听端口 |
+| `MAILCAT_SERVER_HOST` | ❌ | `0.0.0.0` | 服务监听地址 |
+| `MAILCAT_DATABASE_PATH` | ❌ | `./data/emails.db` | SQLite 数据库文件路径 |
+| `TZ` | ❌ | `UTC` | 时区设置，建议 `Asia/Shanghai` |
 
 ### 配置文件
 
-项目支持通过 [`config/config.yaml`](config/config.yaml) 进行配置：
+项目也支持通过 [`config/config.yaml`](config/config.yaml) 进行配置（环境变量优先级更高）：
 
 ```yaml
 server:
-  port: 8080
+  port: "8080"
   host: "0.0.0.0"
 
 database:
-  path: "./data/mailcat.db"
+  path: "./data/emails.db"
 
-auth:
-  api_token: "your_secure_api_token_here"
-  admin_password: "your_secure_admin_password_here"
+api:
+  auth_token: ""  # 建议通过环境变量 MAILCAT_API_AUTH_TOKEN 设置
+
+admin:
+  password: ""  # 建议通过环境变量 MAILCAT_ADMIN_PASSWORD 设置
 ```
+
+> ⚠️ **安全提醒**：请勿将真实的 Token 和密码提交到版本控制中，推荐使用环境变量或 `.env` 文件。
+
+---
+
+## 🔄 升级指南
+
+### 从旧版本升级
+
+MailCat 保证**数据库格式向后兼容**，升级不会影响已有数据。
+
+**Docker 用户：**
+
+```bash
+# 拉取最新镜像
+docker pull ghcr.io/mengmengcode/mailcat:latest
+
+# 重新创建容器（数据卷自动保留）
+docker compose down
+docker compose up -d
+```
+
+**源码用户：**
+
+```bash
+git pull origin main
+cd web/frontend && npm install && npm run build && cd ../..
+go mod tidy
+go build -o mailcat .
+```
+
+### 注意事项
+
+- ✅ 数据库 SQLite 文件完全兼容，无需迁移
+- ✅ 现有 Cloudflare Worker 配置无需修改
+- ⚠️ API 认证已移除 URL 参数传 Token 的方式（安全原因），请改用 `Authorization: Bearer <token>` 请求头
 
 ---
 

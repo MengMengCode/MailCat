@@ -48,7 +48,7 @@ RUN CGO_ENABLED=1 GOOS=linux \
     -o mailcat .
 
 # 第三阶段：运行时镜像
-FROM alpine:latest
+FROM alpine:3.19
 
 # 安装运行时依赖
 RUN apk --no-cache add ca-certificates sqlite tzdata

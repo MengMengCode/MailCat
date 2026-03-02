@@ -65,9 +65,15 @@
         </div>
 
         <div class="tab-content">
-          <!-- HTML 渲染 -->
+          <!-- HTML 渲染（沙箱化 iframe） -->
           <div v-if="activeTab === 'html'" class="tab-pane">
-            <div v-if="email.html_body && email.html_body.trim()" class="email-html-content" v-html="email.html_body"></div>
+            <iframe
+              v-if="email.html_body && email.html_body.trim()"
+              class="email-html-iframe"
+              sandbox="allow-same-origin"
+              referrerpolicy="no-referrer"
+              :srcdoc="email.html_body"
+            ></iframe>
             <div v-else class="empty-content">
               <i class="pi pi-info-circle"></i>
               <p>此邮件没有HTML内容</p>
@@ -321,14 +327,13 @@ export default {
   }
 }
 
-.email-html-content {
-  background: var(--surface);
+.email-html-iframe {
+  width: 100%;
+  min-height: 400px;
+  height: 60vh;
   border: none;
   border-radius: 0 0 var(--radius-large) var(--radius-large);
-  padding: var(--spacing-xl);
-  min-height: 350px;
-  overflow: auto;
-  line-height: 1.6;
+  background: #fff;
 }
 
 .email-text-content,
@@ -366,7 +371,7 @@ export default {
 
 /* 滚动条样式 */
 .email-content::-webkit-scrollbar,
-.email-html-content::-webkit-scrollbar,
+.email-html-iframe::-webkit-scrollbar,
 .email-text-content::-webkit-scrollbar,
 .email-source-content::-webkit-scrollbar,
 .email-headers-content::-webkit-scrollbar {
@@ -375,7 +380,7 @@ export default {
 }
 
 .email-content::-webkit-scrollbar-track,
-.email-html-content::-webkit-scrollbar-track,
+.email-html-iframe::-webkit-scrollbar-track,
 .email-text-content::-webkit-scrollbar-track,
 .email-source-content::-webkit-scrollbar-track,
 .email-headers-content::-webkit-scrollbar-track {
@@ -383,7 +388,7 @@ export default {
 }
 
 .email-content::-webkit-scrollbar-thumb,
-.email-html-content::-webkit-scrollbar-thumb,
+.email-html-iframe::-webkit-scrollbar-thumb,
 .email-text-content::-webkit-scrollbar-thumb,
 .email-source-content::-webkit-scrollbar-thumb,
 .email-headers-content::-webkit-scrollbar-thumb {
@@ -392,7 +397,7 @@ export default {
 }
 
 .email-content::-webkit-scrollbar-thumb:hover,
-.email-html-content::-webkit-scrollbar-thumb:hover,
+.email-html-iframe::-webkit-scrollbar-thumb:hover,
 .email-text-content::-webkit-scrollbar-thumb:hover,
 .email-source-content::-webkit-scrollbar-thumb:hover,
 .email-headers-content::-webkit-scrollbar-thumb:hover {
@@ -421,8 +426,9 @@ export default {
     padding: var(--spacing-md);
   }
   
-  .email-html-content {
-    padding: var(--spacing-md);
+  .email-html-iframe {
+    min-height: 300px;
+    height: 50vh;
   }
   
   .email-text-content,

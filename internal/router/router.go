@@ -5,6 +5,7 @@ import (
 	"mailcat/internal/handlers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"time"
 )
 
@@ -13,22 +14,45 @@ func SetupRouter(db *database.DB, authToken string, adminPassword string) *gin.E
 	gin.SetMode(gin.ReleaseMode)
 	
 	r := gin.Default()
+
+	// 请求体大小限制（10MB，防止大邮件 DoS）
+	r.MaxMultipartMemory = 10 << 20
 	
 	// 设置模板分隔符，避免与Vue.js语法冲突
 	r.Delims("{[{", "}]}")
 	
 	// 静态文件服务 - 仅服务Vue构建后的资源
 	r.Static("/assets", "./web/dist/assets")
+
+	// 安全响应头中间件
+	r.Use(func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("X-XSS-Protection", "1; mode=block")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Next()
+	})
 	
-	// 配置CORS
+	// 配置CORS — 仅允许同源请求
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"}, // 允许所有来源
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowOrigins:     []string{}, // 不允许跨域
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-Admin-Session"},
 		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		AllowCredentials: false,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	// 请求体大小限制中间件
+	r.Use(func(c *gin.Context) {
+		if c.Request.ContentLength > 10*1024*1024 { // 10MB
+			c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{
+				"error": "Request body too large",
+			})
+			return
+		}
+		c.Next()
+	})
 	
 	// 创建邮件处理器
 	emailHandler := handlers.NewEmailHandler(db, authToken)

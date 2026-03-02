@@ -25,15 +25,12 @@ func NewEmailHandler(db *database.DB, authToken string) *EmailHandler {
 	}
 }
 
-// AuthMiddleware 验证API令牌
+// AuthMiddleware 验证API令牌（仅支持 Authorization 请求头）
 func (h *EmailHandler) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("Authorization")
-		if token == "" {
-			token = c.Query("token")
-		}
 
-		if token != "Bearer "+h.authToken && token != h.authToken {
+		if token != "Bearer "+h.authToken {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Unauthorized",
 			})
@@ -272,6 +269,18 @@ func (h *EmailHandler) GetEmailByID(c *gin.Context) {
 		htmlBody = textToHTML(body)
 	}
 
+	// 最终兜底：检测并解码残留的 Quoted-Printable 编码
+	if htmlBody != "" && utils.IsQuotedPrintable(htmlBody) {
+		if decoded, err := utils.DecodeQuotedPrintable(htmlBody); err == nil {
+			htmlBody = decoded
+		}
+	}
+	if body != "" && utils.IsQuotedPrintable(body) {
+		if decoded, err := utils.DecodeQuotedPrintable(body); err == nil {
+			body = decoded
+		}
+	}
+
 	// 清理发件人和收件人字段
 	from := cleanEmailAddress(email.From)
 	to := cleanEmailAddress(email.To)
@@ -294,9 +303,12 @@ func (h *EmailHandler) GetEmailByID(c *gin.Context) {
 
 // isMIMEContent 检查内容是否为MIME格式
 func isMIMEContent(content string) bool {
-	// 检查是否包含MIME边界标识符
-	lines := strings.Split(content, "\r\n")
+	// 检查是否包含MIME边界标识符，同时支持 \n 和 \r\n 换行
+	lines := strings.FieldsFunc(content, func(r rune) bool {
+		return r == '\n'
+	})
 	for _, line := range lines {
+		line = strings.TrimRight(line, "\r")
 		// 查找以 -- 开头的边界线，且长度合理
 		if strings.HasPrefix(line, "--") && len(line) > 10 {
 			// 进一步验证是否包含Content-Type
@@ -331,41 +343,10 @@ func cleanEmailAddress(address string) string {
 
 // HealthCheck 健康检查端点
 func (h *EmailHandler) HealthCheck(c *gin.Context) {
-	// 检查是否提供了认证信息
-	token := c.GetHeader("Authorization")
-	if token == "" {
-		token = c.Query("token")
-	}
-	
-	// 如果提供了认证信息，验证它
-	authenticated := false
-	if token != "" {
-		if token == "Bearer "+h.authToken || token == h.authToken {
-			authenticated = true
-		}
-	}
-	
-	response := gin.H{
-		"status": "ok",
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "ok",
 		"message": "Email receiver service is running",
-		"authenticated": authenticated,
-	}
-	
-	// 如果提供了无效的认证信息，返回401而不是403
-	if token != "" && !authenticated {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"status": "error",
-			"message": "Invalid authentication token",
-			"authenticated": false,
-			"debug_info": gin.H{
-				"received_token": token,
-				"expected_format": "Bearer " + h.authToken,
-			},
-		})
-		return
-	}
-	
-	c.JSON(http.StatusOK, response)
+	})
 }
 
 // isBase64Content 检查内容是否是Base64编码

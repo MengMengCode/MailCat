@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mailcat:
-    image: mengmengcode/mailcat:latest
+    image: ghcr.io/mengmengcode/mailcat:latest
     container_name: mailcat
     restart: unless-stopped
     ports:
